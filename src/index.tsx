@@ -381,14 +381,8 @@ const ModalizeBase = (
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
-  const handleContentLayout = ({ nativeEvent }: LayoutChangeEvent): void => {
-    if (onLayout) {
-      onLayout(nativeEvent);
-    }
-
+  const handleContentLayout = (width: number, height: number): void => {
     if (alwaysOpen && adjustToContentHeight) {
-      const { height } = nativeEvent.layout;
-
       return setModalHeightValue(height);
     }
 
@@ -397,7 +391,7 @@ const ModalizeBase = (
       return;
     }
 
-    handleBaseLayout('content', nativeEvent.layout.height);
+    handleBaseLayout('content', height);
   };
 
   const handleComponentLayout = (
@@ -730,7 +724,7 @@ const ModalizeBase = (
         listener: onScrollBeginDrag,
       }),
       scrollEventThrottle,
-      onLayout: handleContentLayout,
+      onContentSizeChange: handleContentLayout,
       scrollEnabled,
       keyboardDismissMode,
     };
