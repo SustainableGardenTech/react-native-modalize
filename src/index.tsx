@@ -122,6 +122,7 @@ const ModalizeBase = (
     HeaderComponent,
     FooterComponent,
     FloatingComponent,
+    overlayComponent,
 
     // Callbacks
     onOpen,
@@ -792,6 +793,7 @@ const ModalizeBase = (
           >
             {renderContent()}
           </NativeViewGestureHandler>
+          {overlayComponent}
         </Animated.View>
       </PanGestureHandler>
     );

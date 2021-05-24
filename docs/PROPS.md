@@ -478,9 +478,17 @@ A footer component outside of the ScrollView, at the bottom of the modal.
 | ---- | -------- |
 | node | No       |
 
-### `FloatingComponent`
+### `FloatingComponent` (deprecated)
 
-A floating component inside the modal wrapper that will be independent of scrolling. It requires `zIndex` child with absolute positioning. Check out the [Flatlist example](https://github.com/jeremybarbet/react-native-modalize/blob/master/examples/expo/src/components/modals/FlatList.js#L29-L33).
+A floating component (deprecated) inside the modal wrapper that will be independent of scrolling. It requires `zIndex` child with absolute positioning. Check out the [Flatlist example](https://github.com/jeremybarbet/react-native-modalize/blob/master/examples/expo/src/components/modals/FlatList.js#L29-L33).
+
+| Type | Required |
+| ---- | -------- |
+| node | No       |
+
+### `overlayComponent`
+
+This is an overlay component, similar to the FloatingComponent. A floating component inside the modal wrapper that will be independent of scrolling. It requires `zIndex` child with absolute positioning. The Floating Component flickers upon opening, and because of this reason it is deprecated in favour of `overlayComponent`
 
 | Type | Required |
 | ---- | -------- |

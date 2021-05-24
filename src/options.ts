@@ -262,7 +262,11 @@ export interface IProps<ListItem = any> {
   /**
    * A floating component inside the modal wrapper that will be independent of scrolling. It requires `zIndex` child with absolute positioning.
    */
-  FloatingComponent?: React.ReactNode;
+   FloatingComponent?: React.ReactNode;
+   /**
+    * A floating component inside the modal wrapper that will be independent of scrolling. It requires `zIndex` child with absolute positioning.
+    */
+   overlayComponent?: React.ReactNode;
 
   /**
    * Callback function when the `open` method is triggered.
