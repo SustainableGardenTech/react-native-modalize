@@ -381,7 +381,7 @@ const ModalizeBase = (
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
-  const handleContentLayout = (width: number, height: number): void => {
+  const handleContentLayout = (_width: number, height: number): void => {
     if (alwaysOpen && adjustToContentHeight) {
       return setModalHeightValue(height);
     }
