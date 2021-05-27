@@ -131,7 +131,6 @@ const ModalizeBase = (
     onBackButtonPress,
     onPositionChange,
     onOverlayPress,
-    onLayout,
   }: IProps,
   ref: React.Ref<React.ReactNode>,
 ): JSX.Element | null => {
