@@ -132,7 +132,6 @@ const ModalizeBase = (
     onBackButtonPress,
     onPositionChange,
     onOverlayPress,
-    onLayout,
   }: IProps,
   ref: React.Ref<React.ReactNode>,
 ): JSX.Element | null => {
@@ -193,8 +192,6 @@ const ModalizeBase = (
 
   let willCloseModalize = false;
 
-  beginScrollY.addListener(({ value }) => setBeginScrollYValue(value));
-
   const handleBackPress = (): boolean => {
     if (alwaysOpen) {
       return false;
@@ -207,18 +204,6 @@ const ModalizeBase = (
     }
 
     return true;
-  };
-
-  const handleKeyboardShow = (event: KeyboardEvent): void => {
-    const { height } = event.endCoordinates;
-
-    setKeyboardToggle(true);
-    setKeyboardHeight(height);
-  };
-
-  const handleKeyboardHide = (): void => {
-    setKeyboardToggle(false);
-    setKeyboardHeight(0);
   };
 
   const handleAnimateOpen = (
@@ -396,14 +381,8 @@ const ModalizeBase = (
     setDisableScroll(shorterHeight && disableScrollIfPossible);
   };
 
-  const handleContentLayout = ({ nativeEvent }: LayoutChangeEvent): void => {
-    if (onLayout) {
-      onLayout(nativeEvent);
-    }
-
+  const handleContentLayout = (_width: number, height: number): void => {
     if (alwaysOpen && adjustToContentHeight) {
-      const { height } = nativeEvent.layout;
-
       return setModalHeightValue(height);
     }
 
@@ -412,7 +391,7 @@ const ModalizeBase = (
       return;
     }
 
-    handleBaseLayout('content', nativeEvent.layout.height);
+    handleBaseLayout('content', height);
   };
 
   const handleComponentLayout = (
@@ -745,7 +724,7 @@ const ModalizeBase = (
         listener: onScrollBeginDrag,
       }),
       scrollEventThrottle,
-      onLayout: handleContentLayout,
+      onContentSizeChange: handleContentLayout,
       scrollEnabled,
       keyboardDismissMode,
     };
@@ -885,6 +864,25 @@ const ModalizeBase = (
   }, [adjustToContentHeight, modalHeight, screenHeight]);
 
   React.useEffect(() => {
+    const listenerId = beginScrollY.addListener(({ value }) => setBeginScrollYValue(value));
+    return () => {
+      beginScrollY.removeListener(listenerId);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const handleKeyboardShow = (event: KeyboardEvent): void => {
+      const { height } = event.endCoordinates;
+
+      setKeyboardToggle(true);
+      setKeyboardHeight(height);
+    };
+
+    const handleKeyboardHide = (): void => {
+      setKeyboardToggle(false);
+      setKeyboardHeight(0);
+    };
+
     Keyboard.addListener('keyboardDidShow', handleKeyboardShow);
     Keyboard.addListener('keyboardDidHide', handleKeyboardHide);
 
