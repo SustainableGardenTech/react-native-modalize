@@ -24,6 +24,7 @@ import {
   KeyboardAvoidingViewProps,
   ViewStyle,
   NativeEventSubscription,
+  EmitterSubscription,
 } from 'react-native';
 import {
   PanGestureHandler,
@@ -38,6 +39,7 @@ import { IProps, TOpen, TClose, TStyle, IHandles, TPosition } from './options';
 import { useDimensions } from './utils/use-dimensions';
 import { getSpringConfig } from './utils/get-spring-config';
 import { isIphoneX, isIos, isAndroid } from './utils/devices';
+import { isBelowRN65, isRNGH2 } from './utils/libraries';
 import { invariant } from './utils/invariant';
 import { composeRefs } from './utils/compose-refs';
 import s from './styles';
@@ -115,6 +117,7 @@ const ModalizeBase = (
 
     // Elements visibilities
     withReactModal = false,
+    reactModalProps,
     withHandle = true,
     withOverlay = true,
 
@@ -290,7 +293,7 @@ const ModalizeBase = (
     });
   };
 
-  const handleAnimateClose = (dest: TClose = 'default'): void => {
+  const handleAnimateClose = (dest: TClose = 'default', callback?: () => void): void => {
     const { timing, spring } = closeAnimationConfig;
     const lastSnapValue = snapPoint ? snaps[1] : 80;
     const toInitialAlwaysOpen = dest === 'alwaysOpen' && Boolean(alwaysOpen);
@@ -334,6 +337,10 @@ const ModalizeBase = (
     ]).start(() => {
       if (onClosed) {
         onClosed();
+      }
+
+      if (callback) {
+        callback();
       }
 
       if (alwaysOpen && dest === 'alwaysOpen' && onPositionChange) {
@@ -411,12 +418,12 @@ const ModalizeBase = (
     handleBaseLayout(name, nativeEvent.layout.height);
   };
 
-  const handleClose = (dest?: TClose): void => {
+  const handleClose = (dest?: TClose, callback?: () => void): void => {
     if (onClose) {
       onClose();
     }
 
-    handleAnimateClose(dest);
+    handleAnimateClose(dest, callback);
   };
 
   const handleChildren = (
@@ -751,6 +758,7 @@ const ModalizeBase = (
 
   const renderChildren = (): JSX.Element => {
     const style = adjustToContentHeight ? s.content__adjustHeight : s.content__container;
+    const minDist = isRNGH2() ? undefined : ACTIVATED;
 
     return (
       <PanGestureHandler
@@ -759,7 +767,7 @@ const ModalizeBase = (
         simultaneousHandlers={[nativeViewChildrenRef, tapGestureModalizeRef]}
         shouldCancelWhenOutside={false}
         onGestureEvent={handleGestureEvent}
-        minDist={ACTIVATED}
+        minDist={minDist}
         activeOffsetY={ACTIVATED}
         activeOffsetX={ACTIVATED}
         onHandlerStateChange={handleChildren}
@@ -826,8 +834,8 @@ const ModalizeBase = (
       handleAnimateOpen(alwaysOpen, dest);
     },
 
-    close(dest?: TClose): void {
-      handleClose(dest);
+    close(dest?: TClose, callback?: () => void): void {
+      handleClose(dest, callback);
     },
   }));
 
@@ -864,32 +872,42 @@ const ModalizeBase = (
   }, [adjustToContentHeight, modalHeight, screenHeight]);
 
   React.useEffect(() => {
-    const listenerId = beginScrollY.addListener(({ value }) => setBeginScrollYValue(value));
-    return () => {
-      beginScrollY.removeListener(listenerId);
-    };
-  }, []);
-
-  React.useEffect(() => {
     const handleKeyboardShow = (event: KeyboardEvent): void => {
       const { height } = event.endCoordinates;
 
       setKeyboardToggle(true);
       setKeyboardHeight(height);
     };
-
     const handleKeyboardHide = (): void => {
       setKeyboardToggle(false);
       setKeyboardHeight(0);
     };
+    let keyboardShowListener: EmitterSubscription | null = null;
+    let keyboardHideListener: EmitterSubscription | null = null;
 
-    Keyboard.addListener('keyboardDidShow', handleKeyboardShow);
-    Keyboard.addListener('keyboardDidHide', handleKeyboardHide);
+    const beginScrollYListener = beginScrollY.addListener(({ value }) =>
+      setBeginScrollYValue(value),
+    );
+
+    if (isBelowRN65) {
+      Keyboard.addListener('keyboardDidShow', handleKeyboardShow);
+      Keyboard.addListener('keyboardDidHide', handleKeyboardHide);
+    } else {
+      keyboardShowListener = Keyboard.addListener('keyboardDidShow', handleKeyboardShow);
+      keyboardHideListener = Keyboard.addListener('keyboardDidHide', handleKeyboardHide);
+    }
 
     return (): void => {
       backButtonListenerRef.current?.remove();
-      Keyboard.removeListener('keyboardDidShow', handleKeyboardShow);
-      Keyboard.removeListener('keyboardDidHide', handleKeyboardHide);
+      beginScrollY.removeListener(beginScrollYListener);
+
+      if (isBelowRN65) {
+        Keyboard.removeListener('keyboardDidShow', handleKeyboardShow);
+        Keyboard.removeListener('keyboardDidHide', handleKeyboardHide);
+      } else {
+        keyboardShowListener?.remove();
+        keyboardHideListener?.remove();
+      }
     };
   }, []);
 
@@ -951,6 +969,7 @@ const ModalizeBase = (
 
   const renderReactModal = (child: JSX.Element): JSX.Element => (
     <Modal
+      {...reactModalProps}
       supportedOrientations={['landscape', 'portrait', 'portrait-upside-down']}
       onRequestClose={handleBackPress}
       hardwareAccelerated={USE_NATIVE_DRIVER}
@@ -974,4 +993,6 @@ const ModalizeBase = (
 
 export type ModalizeProps = IProps;
 export type Modalize = IHandles;
+
 export const Modalize = React.forwardRef(ModalizeBase);
+export * from './utils/use-modalize';
